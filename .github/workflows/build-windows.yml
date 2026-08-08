@@ -1,0 +1,59 @@
+name: 构建 Windows
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows-amd64:
+    name: 构建 Windows 64 位
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v7
+
+      - name: 配置 Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: 安装系统依赖
+        run: sudo apt-get update && sudo apt-get install --yes protobuf-compiler zip
+
+      - name: 安装构建工具
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          go install github.com/go-task/task/v3/cmd/task@v3.52.0
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.74
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+          go install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.19.1
+
+      - name: 构建 Windows 64 位包
+        run: task build:windows:amd64
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-64
+          path: bin/windows-64.zip
+          if-no-files-found: error
+          retention-days: 14

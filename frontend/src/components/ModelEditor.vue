@@ -236,7 +236,6 @@ async function handleSave() {
     return;
   }
   emit("saved", result.adapter);
-  emit("close");
 }
 
 function handleCancel() {

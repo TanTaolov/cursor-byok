@@ -138,6 +138,10 @@ function handleEditorSaved(adapter) {
   if (activeType.value !== "all" && adapter?.type) {
     activeType.value = adapter.type;
   }
+  const savedIndex = appState.modelAdapters.findIndex((item) => item.id === adapter?.id);
+  if (savedIndex >= 0) {
+    editorIndex.value = savedIndex;
+  }
 }
 
 function destroySortable() {
@@ -477,6 +481,8 @@ onBeforeUnmount(() => {
     :open="editorOpen"
     :title="editorTitle"
     size="xl"
+    :close-on-backdrop="false"
+    :close-on-escape="false"
     :close-disabled="appState.configSaving"
     @close="closeEditor"
   >
